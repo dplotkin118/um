@@ -1,0 +1,102 @@
+README - Homework 6 UM 
+Arvind Pillai (apilla04) and Daniel Plotkin(dplotk01)
+
+We received help from many TAs, but would particularly like to thank 
+Mary-Joy for helping us solve a nasty bug (we casted the modulus as a 
+uint32, not uint64 in multiply and add)
+
+We believe we have implemented everything correctly. However, we did switch 
+the order of two things we planned on the design document. We implemented 
+the memory architecture before we implemented the non-memory based 
+instructions, which we intended to do the opposite of. Additionally, we 
+combined the registers module and the memory module into a
+single module as the registers module was incredibly small on its own.
+
+Our architecture splits the universal machine into two central
+modules. There is a memory module, which contains all of the 
+segmented memory as a memory struct abstraction and the 
+registers as a register struct abstraction. This memory struct
+is a Hanson sequence that stores every memory segment as
+a UArray, and it also holds an additional sequence
+that stores the ids of unmapped segments for reuse.
+The register struct holds a pointer that is initialized
+to an integer array. There is also an instruction module, 
+which contains an enum that has the 14 
+instructions and functions that are called upon the program
+recognizing an instruction from an opcode in a word. 
+The memory struct abstraction knows all about the segmented memory,
+including how many segments of memory there are, what each segment 
+of memory has stored inside of it, and what segments of memory
+have been unmapped for later use. Users can never directly access
+this segmented memory struct, but can use getter and setter functions
+defined in memory.h to access attributes of the struct and to 
+change values inside the memory through the use of UM instructions.
+The register struct abstraction knows all about the values inside of
+the 8 registers. Once again, users can never directly access the values
+of the registers, but can get and set the values inside of the struct
+using the getter and setter methods defined in memory.h.
+The instruction module is primarily how the client can interact with
+the registers and memory. Using provided 32-bit word instructions
+in .um files, the instruction module takes the register and
+memory structs and modifies their values in um.c using 
+the getter and setter methods. The instruction module has no
+struct or information to store, but it regularly accesses the
+opcode and other information inside of the provided words
+which are stored in the memory struct using the program counter. 
+The program counter only has access to the 32-bit words stored
+inside of segment zero, which is consistently retrieved using
+the get_memory methods.  
+
+We know that midmark executes 80 million instructions. 
+We have timed midmark 3 times and the average of these times is
+7.02 seconds. Thus, we set up a proportion to determine how long
+it would take for our UM to execute 50 million instructions.
+Our proportion, 80x = (7.02)(50) = 4.388. Thus, we estimate that
+would take around 4.388 seconds for our UM to execute 50
+million instructions.
+
+UM TESTS:
+We have the tests:
+halt.um, halt-verbose.um, and add.um lab
+multiply.um, which multiplies 2 and 25 to get 50 then halts
+divide.um, which divides 24 by 2 to get 12 then halts
+nand.um, which nands together 5 and 24 to yield 2^32 then halths
+output.um, which outputs 200 and 'a' as characters then halts
+input.um, which takes an input and outputs it then halts
+cmov.um, which loads 3 into r3, 5 into r1, 9 into r2, and 0 into r4. 
+    it then performs conditional move on (r1, r2, r3), and outputs r1
+    it then performs conditional move on (r1, r2, r4), and outputs r1
+    then it halts 
+map.um, which maps a segment with 5 words and puts the result in r1, maps 
+    another segment with 5 words and puts the result in r2, then stores the
+    value 7 in the segment m[r1][r1], loads that segment, and unmaps both
+    mapped segments. then halts
+map2.um, which maps a segment with 5 words and stores it in r1, maps another 
+    segment with 5 words and stores it in r3, unmaps both segments, then
+    maps a segment with 11 words and stores it in r2, and maps another segment
+    with 9 words and stores it in r4. then halts 
+sload.um, which maps a segment with 5 words and stores it in r1, then stores 
+    2 in segment m[r1][2], loads segment m[r1][2], and stores the value in r3. 
+    then halts. 
+loadval.um, which inputs a through h into registers r0 through r7 
+    respectively, and outputs each after it is loaded. it then
+    loads 'h' into r0, outputs it, then halts
+loadp.um, which maps a segment with 7 words and stores it in r3, loads 80
+    into r4 which corresponds to the instruction cmov(r1, r2, r0), then
+    stores that value in m[r3][0]. it then stores this same instruction in 
+    all segments m[r3][1 through 6]. then, it segmented loads the value at
+    m[r3][6], and stores it in r0. it outputs r0. then, it uses a series of 
+    loading, nanding, and dividing, to make the instruction "halt", and stores
+    it in segment m[r3][6]. then, it uses a series of loadvals multiplys, and
+    adds, to create the instruction for load program(r3, r7), puts it in r6. 
+    then, the program maps a segment of 2 words, and puts the value in r3. 
+    the load program instruction is stored in m[r3][0]. then a halt 
+    instruction is stored in m[r3][1], and the program loads a program from
+    segment m[r3][0]. then halts
+Our tests were mostly tested with print statements in our functions, so 
+the majority of them do not have meaningful outputs. 
+
+We spent approximately:
+3 hours analyzing the assignment
+3 hours preparing our design
+20 hours solving the problems after our analysis
