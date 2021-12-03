@@ -272,7 +272,8 @@ void free_memory(memory_struct memory)
 {
     Seq_T main = memory->memory_segments;
     Seq_T ids = memory->ids;
-    for (int i = 0; i < Seq_length(main); i++) {
+    int length = Seq_length(main);
+    for (int i = 0; i < length; i++) {
         UArray_T value = Seq_get(main, i);
         if(value != NULL) {
             UArray_free(&value);

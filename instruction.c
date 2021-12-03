@@ -273,7 +273,8 @@ void map_segment(registers_struct registers, memory_struct memory,
     int r3 = Bitpack_getu(word, 3, 0);
     uint32_t r3_val = get_register(registers, r3);
     UArray_T array = UArray_new(r3_val, sizeof(uint32_t));
-    for (int i = 0; i < UArray_length(array); i++) {
+    int length = UArray_length(array);
+    for (int i = 0; i < length; i++) {
         uint32_t *tmp = UArray_at(array, i);
         *tmp = 0;
     }
