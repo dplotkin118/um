@@ -388,7 +388,8 @@ uint32_t load_program(registers_struct registers, memory_struct memory,
     }
     UArray_T array = (UArray_T)get_memory(memory, r2_val);
     UArray_T copy = UArray_copy(array, UArray_length(array));
-    //UArray_free(&array);
+    UArray_T zero_array = (UArray_T)get_memory(memory, 0);
+    UArray_free(&zero_array);
     add_to_memory(memory, 0, copy);
     return r3_val;
 }
