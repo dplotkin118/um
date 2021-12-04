@@ -24,6 +24,18 @@ struct memory_struct{
     Seq_T ids;
 };
 
+
+// uint64_t newu(uint64_t word, unsigned width, unsigned lsb,
+//                       uint64_t value)
+// {
+//         assert(width <= 64);
+//         unsigned hi = lsb + width; /* one beyond the most significant bit */
+//         assert(hi <= 64);
+//         assert(value >> width == 0);
+//         return (word >> hi) << hi                 /* high part */
+//                 | ((word << (64 - lsb)) >> (64 - lsb))  /* low part  */
+//                 | (value << lsb);                   /* new part  */
+// }
 /*
  * add_to_memory
  * Purpose:
