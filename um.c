@@ -70,44 +70,32 @@ int main(int argc, char *argv[])
             }
         }
         else {
+            int r1 = getu(*word, 3, 6);
+            int r2 = getu(*word, 3, 3);
+            int r3 = getu(*word, 3, 0);
             if (opcode == ADD) {
-                int r1 = getu(*word, 3, 6);
-                int r2 = getu(*word, 3, 3);
-                int r3 = getu(*word, 3, 0);
                 uint32_t r2_val = get_register(registers, r2);
                 uint32_t r3_val = get_register(registers, r3);
                 set_register(registers, r1, (r2_val + r3_val)
                                                     % (uint64_t)pow(2, 32));
             }
             if (opcode == MUL) {
-                int r1 = getu(*word, 3, 6);
-                int r2 = getu(*word, 3, 3);
-                int r3 = getu(*word, 3, 0);
                 uint32_t r2_val = get_register(registers, r2);
                 uint32_t r3_val = get_register(registers, r3);
                 set_register(registers, r1, (r2_val * r3_val)
                                                     % (uint64_t)pow(2, 32));
             }
             if (opcode == DIV) {
-                int r1 = getu(*word, 3, 6);
-                int r2 = getu(*word, 3, 3);
-                int r3 = getu(*word, 3, 0);
                 uint32_t r2_val = get_register(registers, r2);
                 uint32_t r3_val = get_register(registers, r3);
                 set_register(registers, r1, r2_val / r3_val);
             }
             if (opcode == NAND) {
-                int r1 = getu(*word, 3, 6);
-                int r2 = getu(*word, 3, 3);
-                int r3 = getu(*word, 3, 0);
                 uint32_t r2_val = get_register(registers, r2);
                 uint32_t r3_val = get_register(registers, r3);
                 set_register(registers, r1, ~(r2_val & r3_val));
             }
             if (opcode == CMOV) {
-                int r1 = getu(*word, 3, 6);
-                int r2 = getu(*word, 3, 3);
-                int r3 = getu(*word, 3, 0);
                 uint32_t r2_val = get_register(registers, r2);
                 uint32_t r3_val = get_register(registers, r3);
                 if (r3_val != 0) {
@@ -115,13 +103,11 @@ int main(int argc, char *argv[])
                 }
             }
             if (opcode == OUT) {
-                int r3 = getu(*word, 3, 0);
                 uint32_t r3_val = get_register(registers, r3);
                 assert(r3_val <= 255);
                 printf("%c", r3_val);
             }
             if (opcode == IN) {
-                int r3 = getu(*word, 3, 0);
                 uint32_t r3_val = getchar();
                 if (r3_val <= 255) {
                     set_register(registers, r3, r3_val);
@@ -137,8 +123,6 @@ int main(int argc, char *argv[])
                 set_register(registers, r, val);
             }
             if (opcode == ACTIVATE) {
-                int r2 = getu(*word, 3, 3);
-                int r3 = getu(*word, 3, 0);
                 uint32_t r3_val = get_register(registers, r3);
                 UArray_T array = UArray_new(r3_val, sizeof(uint32_t));
                 int length = UArray_length(array);
@@ -156,8 +140,7 @@ int main(int argc, char *argv[])
                     set_register(registers, r2, lowest_id);
                 }
             }
-            if (opcode == INACTIVATE) {
-                int r3 = getu(*word, 3, 0);
+            if (opcode == INACTIVATE) {;
                 uint32_t r3_val = get_register(registers, r3);
 
                 UArray_T array = (UArray_T)get_memory(memory, r3_val);
@@ -167,9 +150,6 @@ int main(int argc, char *argv[])
                 add_id(memory, r3_val);
             }
             if (opcode == SLOAD) {
-                int r1 = getu(*word, 3, 6);
-                int r2 = getu(*word, 3, 3);
-                int r3 = getu(*word, 3, 0);
                 uint32_t r2_val = get_register(registers, r2);
                 uint32_t r3_val = get_register(registers, r3);
                 UArray_T array = (UArray_T)get_memory(memory, r2_val);
@@ -177,9 +157,6 @@ int main(int argc, char *argv[])
                 set_register(registers, r1, *value);
             }
             if (opcode == SSTORE) {
-                int r1 = getu(*word, 3, 6);
-                int r2 = getu(*word, 3, 3);
-                int r3 = getu(*word, 3, 0);
                 uint32_t r1_val = get_register(registers, r1);
                 uint32_t r2_val = get_register(registers, r2);
                 uint32_t r3_val = get_register(registers, r3);
