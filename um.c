@@ -29,17 +29,30 @@ int main(int argc, char *argv[])
     uint32_t i = 0;
     while (1) {
         UArray_T segment_zero = (UArray_T)get_memory(memory, 0);
-        uint32_t *instruction = (uint32_t *)UArray_at(segment_zero, i);
-        Um_opcode opcode = get_opcode(*instruction);
+        uint32_t *word = (uint32_t *)UArray_at(segment_zero, i);
+        Um_opcode opcode = get_opcode(*word);
         if (opcode == HALT) {
             break;
         }
         else if (opcode == LOADP) {
-            uint32_t val = load_program(registers, memory, *instruction);
-            i = val;
+            int r2 = Bitpack_getu(*word, 3, 3);
+            int r3 = Bitpack_getu(*word, 3, 0);
+            uint32_t r2_val = get_register(registers, r2);
+            uint32_t r3_val = get_register(registers, r3);
+            if (r2_val == 0) {
+                i = r3_val;
+            }
+            else {
+                UArray_T array = (UArray_T)get_memory(memory, r2_val);
+                UArray_T copy = UArray_copy(array, UArray_length(array));
+                UArray_T zero_array = (UArray_T)get_memory(memory, 0);
+                UArray_free(&zero_array);
+                add_to_memory(memory, 0, copy);
+                i = r3_val;
+            }
         }
         else {
-            call_function(registers, memory, opcode, *instruction);
+            call_function(registers, memory, opcode, *word);
             i++;
         }
     }
