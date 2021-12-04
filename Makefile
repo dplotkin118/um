@@ -12,7 +12,7 @@ EXECS   = um
 
 all: $(EXECS)
 
-um: um.o memory.o instruction.o
+um: um.o memory.o
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 # memory: memory.o
