@@ -13,92 +13,84 @@
 #include "um.h"
 #include "inttypes.h"
 
-struct registers_struct{
-    uint32_t *registers;
-};
-
 struct memory_struct{
-    Seq_T memory_segments;
-    Seq_T ids;
+    UArray_T memory_segments;
+    UArray_T ids;
+    uint32_t memory_size;
+    uint32_t ids_size;
 };
 
 void add_to_memory(memory_struct memory, uint32_t index, void *value)
 {
-    Seq_T segments = memory->memory_segments;
-    Seq_put(segments, index, value);
+    UArray_T segments = memory->memory_segments;
+    UArray_T *tmp = UArray_at(segments, index);
+    *tmp = value;
+    //Seq_put(segments, index, value);
 }
 
 void addhi_to_memory(memory_struct memory, void *value)
 {
-    Seq_T segments = memory->memory_segments;
-    Seq_addhi(segments, value);
+    //UArray_T segments = memory->memory_segments;
+    //call add_to_memory with current size
+    uint32_t size = memory->memory_size;
+    add_to_memory(memory, size, value);
+    size++;
+    memory->memory_size = size;
+    //Seq_addhi(segments, value);
 }
 
 uint32_t memory_length(memory_struct memory)
 {
-    Seq_T segments = memory->memory_segments;
-    return (uint32_t)Seq_length(segments);
+    uint32_t size = memory->memory_size;
+    return size;
+    //UArray_T segments = memory->memory_segments;
+    //return (uint32_t)UArray_length(segments);
 }
 
 uint32_t ids_length(memory_struct memory)
 {
-    Seq_T ids = memory->ids;
-    return (uint32_t)Seq_length(ids);
+    uint32_t size = memory->ids_size;
+    return size;
+    //return (uint32_t)UArray_length(ids);
 }
+
 
 memory_struct initialize_memory()
 {
     /*malloc memory segments sequence*/
     /*malloc a single memory segment to start*/
     memory_struct memory = malloc(sizeof(struct memory_struct));
-    Seq_T id_sequence = Seq_new(0);
-    Seq_T segment = Seq_new(0);
+    UArray_T id_sequence = UArray_new(pow(2, 25), sizeof(uint32_t));
+    UArray_T segment = UArray_new(pow(2, 25), sizeof(UArray_T));
     memory->ids = id_sequence;
     memory->memory_segments = segment;
+    uint32_t memory_size = 1;
+    memory->memory_size = memory_size;
+    uint32_t ids_size = 0;
+    memory->ids_size = ids_size;
     UArray_T array = UArray_new(pow(2, 25), sizeof(uint32_t));
-    Seq_addlo(segment, array);
+    UArray_T *tmp = UArray_at(segment, 0);
+    *tmp = array;
+    //Seq_addlo(segment, array);
     return memory;
 }
 
-void set_register(registers_struct r, int name, uint32_t value)
-{
-    assert(name < 8 && name >= 0);
-    (r->registers)[name] = value;
-    (void) name;
-}
-
-uint32_t get_register(registers_struct r, int name)
-{
-    assert(name < 8 && name >= 0);
-    uint32_t var = (r->registers)[name];
-    (void)name;
-    return var;
-}
-
-registers_struct initialize_registers()
-{
-    uint32_t *array = malloc(8 * sizeof(uint32_t));
-    registers_struct result = malloc(sizeof(registers_struct));
-    result->registers = array;
-    for (int i = 0; i < 8; i++) {
-        array[i] = 0;
-    }
-    return result;
-}
 
 void populate_segment_zero(FILE *fp, memory_struct memory)
 {
     uint32_t counter = 0;
-    Seq_T segments = memory->memory_segments;
-    UArray_T array = Seq_get(segments, 0);
+    UArray_T segments = memory->memory_segments;
+    UArray_T *array = UArray_at(segments, 0);
     while (1) {
         uint32_t codeword = get_word(fp);
         if (feof(fp)) {
             break;
         }
-        uint32_t *tmp = UArray_at(array, counter);
+        uint32_t *tmp = UArray_at(*array, counter);
         *tmp = codeword;
+        //printf("counter: %d\n", counter);
         counter++;
+        
     }
 }
 
@@ -127,45 +119,50 @@ uint32_t get_word(FILE *fp)
 
 void *get_memory(memory_struct memory, uint32_t segment)
 {
-    Seq_T sequence = memory->memory_segments;
-    void *value = Seq_get(sequence, segment);
+    UArray_T sequence = memory->memory_segments;
+    void *value = UArray_at(sequence, segment);
     return value;
 }
 
 uint32_t get_lowest_id(memory_struct memory)
 {
-    Seq_T ids = memory->ids;
-    uint32_t id = (uint32_t)(uintptr_t)Seq_remlo(ids);
-    return id;
+    UArray_T ids = memory->ids;
+    uint32_t size = memory->ids_size;
+    size--;
+    uint32_t *id = UArray_at(ids, size);
+    memory->ids_size = size;
+    return *id;
 }
 
 void add_id(memory_struct memory, uint32_t value)
 {
-    Seq_T ids = memory->ids;
-    Seq_addhi(ids, (void *)(uintptr_t)value);
+    UArray_T ids = memory->ids;
+    //call add_to_memory with current size
+    uint32_t size = memory->ids_size;
+    uint32_t *tmp = UArray_at(ids, size);
+    *tmp = value;
+    size++;
+    memory->ids_size = size;
+    
+    //UArray_addhi(ids, (void *)(uintptr_t)value);
 }
 
 void free_memory(memory_struct memory)
 {
-    Seq_T main = memory->memory_segments;
-    Seq_T ids = memory->ids;
-    int length = Seq_length(main);
-    for (int i = 0; i < length; i++) {
-        UArray_T value = Seq_get(main, i);
-        if(value != NULL) {
-            UArray_free(&value);
+    UArray_T main = memory->memory_segments;
+    UArray_T ids = memory->ids;
+    uint32_t size = memory->memory_size;
+    //int length = UArray_length(main);
+    for (uint32_t i = 0; i < size; i++) {
+        UArray_T *value = UArray_at(main, i);
+        if(*value != NULL) {
+            UArray_free(value);
         }
     }
-    Seq_free(&main);
-    Seq_free(&ids);
+    (void) size;
+    UArray_free(&main);
+    UArray_free(&ids);
     free(memory);
-}
-
-void free_registers(registers_struct r)
-{
-    uint32_t *array = r->registers;
-    free(array);
-    free(r);
 }
 
 
@@ -209,8 +206,10 @@ int main(int argc, char *argv[])
     }
     uint32_t i = 0;
     while (1) {
-        UArray_T segment_zero = (UArray_T)get_memory(memory, 0);
-        uint32_t *word = (uint32_t *)UArray_at(segment_zero, i);
+        UArray_T *segment_zero = get_memory(memory, 0);
+        //uint32_t length = UArray_length(segment_zero);
+        //printf("%d\n", i);
+        uint32_t *word = UArray_at(*segment_zero, i);
         Um_opcode opcode = getu(*word, 4, 28);
         if (opcode == HALT) {
             break;
@@ -224,10 +223,10 @@ int main(int argc, char *argv[])
                 i = r3_val;
             }
             else {
-                UArray_T array = (UArray_T)get_memory(memory, r2_val);
-                UArray_T copy = UArray_copy(array, UArray_length(array));
-                UArray_T zero_array = (UArray_T)get_memory(memory, 0);
-                UArray_free(&zero_array);
+                UArray_T *array = get_memory(memory, r2_val);
+                UArray_T copy = UArray_copy(*array, UArray_length(*array));
+                UArray_T *zero_array = get_memory(memory, 0);
+                UArray_free(zero_array);
                 add_to_memory(memory, 0, copy);
                 i = r3_val;
             }
@@ -304,8 +303,8 @@ int main(int argc, char *argv[])
             if (opcode == INACTIVATE) {;
                 uint32_t r3_val = registers[r3];
 
-                UArray_T array = (UArray_T)get_memory(memory, r3_val);
-                UArray_free(&array);
+                UArray_T *array = get_memory(memory, r3_val);
+                UArray_free(array);
 
                 add_to_memory(memory, r3_val, NULL);
                 add_id(memory, r3_val);
@@ -313,16 +312,16 @@ int main(int argc, char *argv[])
             if (opcode == SLOAD) {
                 uint32_t r2_val = registers[r2];
                 uint32_t r3_val = registers[r3];
-                UArray_T array = (UArray_T)get_memory(memory, r2_val);
-                uint32_t *value = (uint32_t *)UArray_at(array, r3_val);
+                UArray_T *array = get_memory(memory, r2_val);
+                uint32_t *value = UArray_at(*array, r3_val);
                 registers[r1] = *value;
             }
             if (opcode == SSTORE) {
                 uint32_t r1_val = registers[r1];
                 uint32_t r2_val = registers[r2];
                 uint32_t r3_val = registers[r3];
-                UArray_T array = (UArray_T)get_memory(memory, r1_val);
-                uint32_t *value = UArray_at(array, r2_val);
+                UArray_T *array = get_memory(memory, r1_val);
+                uint32_t *value = UArray_at(*array, r2_val);
                 *value = r3_val;
             }
             i++;
